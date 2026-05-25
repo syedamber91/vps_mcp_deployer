@@ -169,7 +169,8 @@ server.tool(
 
 // --- Main ---
 async function main() {
-  await tunnel.connect();
+  // NOTE: Do NOT await tunnel.connect() here — it blocks the MCP stdio
+  // handshake. The tunnel connects lazily on first tool call via ensureConnected().
   const transport = new StdioServerTransport();
   await server.connect(transport);
 }
