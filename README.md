@@ -68,6 +68,75 @@ When you call `deploy`, provide your project's CLAUDE.md content. The VPS agent:
 
 This means different projects can have different deploy procedures — the agent adapts to each project's CLAUDE.md.
 
+## Alternative: Direct curl via SSH Tunnel (No MCP)
+
+If MCP registration isn't working or you prefer raw HTTP, any Claude Code conversation can call the VPS agent directly via curl through an SSH tunnel.
+
+### 1. Open SSH tunnel
+
+```bash
+ssh -N -L 7847:127.0.0.1:7847 syamiq@187.77.185.22 &
+```
+
+### 2. Query endpoints (GET, no body)
+
+```bash
+AUTH="Authorization: Bearer <YOUR_AUTH_TOKEN>"
+
+# Health check (no auth)
+curl -s http://127.0.0.1:7847/health
+
+# All containers
+curl -s -H "$AUTH" http://127.0.0.1:7847/docker-status
+
+# Container logs (last 50 lines)
+curl -s -H "$AUTH" http://127.0.0.1:7847/docker-logs/docker-data-frontend-1?lines=50
+
+# Disk usage
+curl -s -H "$AUTH" http://127.0.0.1:7847/disk-usage
+
+# Git status
+curl -s -H "$AUTH" http://127.0.0.1:7847/git-status
+
+# Database health
+curl -s -H "$AUTH" http://127.0.0.1:7847/db-health
+
+# Service health
+curl -s -H "$AUTH" http://127.0.0.1:7847/service-health
+```
+
+### 3. Deploy (POST with CLAUDE.md context)
+
+```bash
+curl -s -X POST -H "$AUTH" -H "Content-Type: application/json" \
+  http://127.0.0.1:7847/deploy \
+  -d '{
+    "repo_url": "https://github.com/user/repo",
+    "branch": "develop",
+    "claude_md": "<contents of your CLAUDE.md>",
+    "operation": "frontend",
+    "working_directory": "/local/data/scrath/docker-data"
+  }'
+```
+
+### 4. Run a job (POST)
+
+```bash
+curl -s -X POST -H "$AUTH" -H "Content-Type: application/json" \
+  http://127.0.0.1:7847/run-job \
+  -d '{
+    "repo_url": "https://github.com/user/repo",
+    "branch": "develop",
+    "claude_md": "<contents of your CLAUDE.md>",
+    "job_name": "bash /workspace/run_e2e.sh",
+    "job_args": ["company1:notebook_id1"]
+  }'
+```
+
+### Using from Claude Code (Bash tool)
+
+Other conversations can open the SSH tunnel and call curl directly via the Bash tool — no MCP server registration needed. The tunnel persists for the session.
+
 ## Development
 
 ```bash
