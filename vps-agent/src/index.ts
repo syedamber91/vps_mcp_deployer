@@ -115,6 +115,7 @@ app.get("/db-health", async (_req, res) => {
 });
 
 const PORT = parseInt(process.env.VPS_AGENT_PORT || "7847", 10);
-app.listen(PORT, "127.0.0.1", () => {
-  console.log(`VPS agent listening on 127.0.0.1:${PORT}`);
+const BIND_HOST = process.env.BIND_HOST || "0.0.0.0";
+app.listen(PORT, BIND_HOST, () => {
+  console.log(`VPS agent listening on ${BIND_HOST}:${PORT}`);
 });
